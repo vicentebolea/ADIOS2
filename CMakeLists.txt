@@ -188,6 +188,8 @@ adios_option(AWSSDK     "Enable support for S3 compatible storage using AWS SDK'
 adios_option(Derived_Variable    "Enable support for derived variables" OFF)
 adios_option(PIP        "Enable support for pip packaging" OFF)
 
+option(ADIOS2_LIBADIOS_MODE "Install only C/C++ library components" OFF)
+mark_as_advanced(ADIOS2_LIBADIOS_MODE)
 option(ADIOS2_Blosc2_PREFER_SHARED "Prefer shared Blosc2 libraries" ON)
 mark_as_advanced(ADIOS2_Blosc2_PREFER_SHARED)
 mark_as_advanced(ADIOS2_USE_PIP)
@@ -312,6 +314,10 @@ if(MSVC AND BUILD_SHARED_LIBS AND ADIOS2_HAVE_HDF5)
   # See note about building with visual studio and shared libs, here:
   #     https://github.com/HDFGroup/hdf5/blob/develop/release_docs/USING_HDF5_VS.txt
   add_definitions(-DH5_BUILT_AS_DYNAMIC_LIB=1)
+endif()
+
+if (ADIOS2_LIBADIOS_MODE)
+  set(ADIOS2_MAYBE_EXCLUDE_FROM_ALL "EXCLUDE_FROM_ALL")
 endif()
 
 #------------------------------------------------------------------------------#
