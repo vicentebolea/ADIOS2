@@ -23,6 +23,7 @@ default:
   stage: build
   script:
     - bash scripts/ci/gitlab-ci/run.sh update
+
     - bash scripts/ci/gitlab-ci/run.sh configure
     - bash scripts/ci/gitlab-ci/run.sh build
   artifacts:
