@@ -24,7 +24,6 @@ project(ADIOS2 VERSION ${ADIOS2_VERSION})
 include(GNUInstallDirs)
 
 if (ADIOS2_USE_PIP)
-  # Only UNIX is supported currently
   if (UNIX)
     # Linux bundles what libraries we have when they're put beside the modules.
     set(CMAKE_INSTALL_LIBDIR "adios2")
@@ -32,6 +31,10 @@ if (ADIOS2_USE_PIP)
     # ELF loader settings.
     set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
     list(APPEND CMAKE_INSTALL_RPATH "$ORIGIN")
+  elseif(WIN32)
+    # Windows: install all DLLs alongside the .pyd so that
+    # LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR resolves transitive dependencies.
+    set(CMAKE_INSTALL_BINDIR "adios2/bindings")
   endif ()
 endif ()
 
@@ -396,6 +399,23 @@ if(BUILD_TESTING)
 
   enable_testing()
   add_subdirectory(testing)
+endif()
+
+#------------------------------------------------------------------------------#
+# On Windows pip builds, bundle the MSVC runtime DLLs (msvcp140.dll etc.)
+# alongside the adios2 DLLs so that Python's DLL loader can find them.
+# The LOAD_LIBRARY_SEARCH_DEFAULT_DIRS flag used by Python's import system
+# does not search PATH, and the MSVC runtime is not guaranteed to be in
+# System32 on CI runners or minimal Windows installations.
+#------------------------------------------------------------------------------#
+if(ADIOS2_USE_PIP AND WIN32 AND MSVC)
+  include(InstallRequiredSystemLibraries)
+  if(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS)
+    install(FILES ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
+      DESTINATION ${CMAKE_INSTALL_BINDIR}
+      COMPONENT adios2_python-python
+    )
+  endif()
 endif()
 
 #------------------------------------------------------------------------------#
