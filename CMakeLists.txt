@@ -402,23 +402,6 @@ if(BUILD_TESTING)
 endif()
 
 #------------------------------------------------------------------------------#
-# On Windows pip builds, bundle the MSVC runtime DLLs (msvcp140.dll etc.)
-# alongside the adios2 DLLs so that Python's DLL loader can find them.
-# The LOAD_LIBRARY_SEARCH_DEFAULT_DIRS flag used by Python's import system
-# does not search PATH, and the MSVC runtime is not guaranteed to be in
-# System32 on CI runners or minimal Windows installations.
-#------------------------------------------------------------------------------#
-if(ADIOS2_USE_PIP AND WIN32 AND MSVC)
-  include(InstallRequiredSystemLibraries)
-  if(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS)
-    install(FILES ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
-      DESTINATION ${CMAKE_INSTALL_BINDIR}
-      COMPONENT adios2_python-python
-    )
-  endif()
-endif()
-
-#------------------------------------------------------------------------------#
 # Generating package configs
 #------------------------------------------------------------------------------#
 add_subdirectory(cmake/install/packaging)

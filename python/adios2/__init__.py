@@ -24,7 +24,6 @@ if sys.platform == "win32":
     ):
         if _dll_dir.is_dir():
             _dll_dir_handles.append(os.add_dll_directory(str(_dll_dir)))
-            os.environ["PATH"] = str(_dll_dir) + os.pathsep + os.environ["PATH"]
 
 import adios2.bindings
 
