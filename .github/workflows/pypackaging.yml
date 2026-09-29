@@ -119,6 +119,49 @@ jobs:
           name: artifact_wheels_freethreaded
           path: wheelhouse/*.whl
 
+  build_wheels_macos:
+    name: Wheels macOS ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            arch: arm64
+            target: '14.0'
+          - os: macos-15-intel
+            arch: x86_64
+            target: '15.0'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+        with:
+          fetch-depth: 0
+      - name: Generate common version file
+        run: cmake -P scripts/ci/gh-actions/config/adios-version.cmake && echo VERSION.TXT
+      - name: Build abi3 wheel only (pull requests)
+        if: github.event_name == 'pull_request'
+        uses: pypa/cibuildwheel@e090b81e30c4d855ea63bf4b6e59204c09a101ae # v4.2.1
+        env:
+          CIBW_BEFORE_ALL: brew install openssl libsodium
+          CIBW_BUILD: cp312-macosx_${{ matrix.arch }}
+          MACOSX_DEPLOYMENT_TARGET: ${{ matrix.target }}
+      - name: Build all wheels (master, release and tags)
+        if: github.event_name != 'pull_request'
+        uses: pypa/cibuildwheel@e090b81e30c4d855ea63bf4b6e59204c09a101ae # v4.2.1
+        env:
+          CIBW_BEFORE_ALL: brew install openssl libsodium
+          CIBW_BUILD: >-
+            cp39-macosx_${{ matrix.arch }}
+            cp310-macosx_${{ matrix.arch }}
+            cp311-macosx_${{ matrix.arch }}
+            cp312-macosx_${{ matrix.arch }}
+            cp314t-macosx_${{ matrix.arch }}
+          MACOSX_DEPLOYMENT_TARGET: ${{ matrix.target }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+        with:
+          name: artifact_wheels_macos_${{ matrix.arch }}
+          path: wheelhouse/*.whl
+
   test_wheels:
     name: Test wheel on ubuntu
     needs: [build_wheels_legacy, build_wheels_stable, build_wheels_freethreaded]
@@ -154,7 +197,7 @@ jobs:
         shell: bash
 
   upload_pypi:
-    needs: [build_wheels_legacy, build_wheels_stable, build_wheels_freethreaded, make_sdist]
+    needs: [build_wheels_legacy, build_wheels_stable, build_wheels_freethreaded, build_wheels_macos, make_sdist]
     environment: pypi
     permissions:
       contents: read
@@ -177,7 +220,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1
 
   upload_test_pypi:
-    needs: [build_wheels_legacy, build_wheels_stable, build_wheels_freethreaded, make_sdist]
+    needs: [build_wheels_legacy, build_wheels_stable, build_wheels_freethreaded, build_wheels_macos, make_sdist]
     environment: testpypi
     permissions:
       contents: read
