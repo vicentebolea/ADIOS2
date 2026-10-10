@@ -12,10 +12,18 @@ message_start_thirdparty()
 add_library(xxhash_wrapper INTERFACE)
 
 if(ADIOS2_USE_EXTERNAL_XXHASH)
-  find_package(xxHash REQUIRED)
-  target_link_libraries(xxhash_wrapper INTERFACE
-    $<BUILD_INTERFACE:xxHash::xxhash>
-  )
+  find_package(xxHash QUIET)
+  if (xxHash_FOUND)
+    target_link_libraries(xxhash_wrapper INTERFACE
+      $<BUILD_INTERFACE:xxHash::xxhash>
+    )
+  else()
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(xxhash REQUIRED IMPORTED_TARGET libxxhash)
+    target_link_libraries(xxhash_wrapper INTERFACE
+      $<BUILD_INTERFACE:PkgConfig::xxhash>
+    )
+  endif()
 else()
   target_include_directories(xxhash_wrapper INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/xxhash_wrapper>
